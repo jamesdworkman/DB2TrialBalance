@@ -1,0 +1,204 @@
+WITH BEGBALcte 
+AS
+(SELECT  COMNO, GLANO,  BALFD -BALFC AS BegBal
+FROM amflib1.GELMAS
+WHERE GLTYP = 1 AND BALFD-BALFC <>0
+UNION
+SELECT  COMNO, GLANO,  BALFD -BALFC AS BegBal
+FROM amflib4.GELMAS
+WHERE GLTYP = 1 AND BALFD-BALFC <>0
+UNION 
+SELECT  COMNO, GLANO,  BALFD -BALFC AS BegBal
+FROM amflib5.GELMAS
+WHERE GLTYP = 1 AND BALFD-BALFC <>0
+UNION 
+SELECT  COMNO, GLANO,  BALFD -BALFC AS BegBal
+FROM amflib6.GELMAS
+WHERE GLTYP = 1 AND BALFD-BALFC <>0
+UNION 
+SELECT  COMNO, GLANO,  BALFD -BALFC AS BegBal
+FROM amflib7.GELMAS
+WHERE GLTYP = 1 AND BALFD-BALFC <>0
+UNION 
+SELECT  COMNO, GLANO,  BALFD -BALFC AS BegBal
+FROM amflib8.GELMAS
+WHERE GLTYP = 1 AND BALFD-BALFC <>0
+UNION 
+SELECT  COMNO, GLANO,  BALFD -BALFC AS BegBal
+FROM amflib9.GELMAS
+WHERE GLTYP = 1 AND BALFD-BALFC <>0
+UNION 
+SELECT  COMNO, GLANO,  BALFD -BALFC AS BegBal
+FROM amfliba.GELMAS
+WHERE GLTYP = 1 AND BALFD-BALFC <>0
+UNION
+SELECT  COMNO, GLANO,  BALFD -BALFC AS BegBal
+FROM amflibb.GELMAS
+WHERE GLTYP = 1 AND BALFD-BALFC <>0),
+GLcte as
+(SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM AMFLIB1.TEMGEN
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM amflib1.CURHIS
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM AMFLIB4.TEMGEN
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM amflib4.CURHIS
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM AMFLIB5.TEMGEN
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM amflib5.CURHIS
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM AMFLIBa.TEMGEN
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM amfliba.CURHIS
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM AMFLIBb.TEMGEN
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM amflibb.CURHIS
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM AMFLIB6.TEMGEN
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM amflib6.CURHIS
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM AMFLIB8.TEMGEN
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM amflib8.CURHIS
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM AMFLIB9.TEMGEN
+UNION
+SELECT JRFNO, COMNO, GLANO, EYEAR,
+CASE WHEN DRCRC ='C' THEN -1*GLAMT 
+ELSE GLAMT 
+END AS NormalizedAmount
+FROM amflib9.CURHIS),
+TOTALcte as
+(SELECT COMNO, trim(GLANO) AS Account, sum(BEGBAL) AS Total
+FROM BEGBALcte
+GROUP BY COMNO, GLANO
+UNION all
+SELECT COMNO, trim(GLANO) AS Account, sum(NormalizedAmount) AS Total
+FROM GLcte
+-- Change year to last year to exclude it (current year is 120, 0 and 20 format depending on what company)
+WHERE EYEAR <> 120 and EYEAR <> 119
+GROUP BY COMNO, GLANO)
+SELECT comno, trim(Account) AS Account, sum(Total) AS Total,
+case
+when Account between 1000 and 1099 then 'Cash & Cash Equivalents'
+when Account between 1203 and 1203 then 'Accounts Receivable'
+when Account between 1204 and 1204 then 'Notes Rec. - Shareholders'
+when Account between 1205 and 1215 then 'Other Receivables'
+when Account between 1217 and 1217 then 'Bad Debt Reserve'
+when Account between 1220 and 1222 then 'Other Receivables'
+when Account between 1241 and 1241 then 'Cost in Excess of Billing'
+when Account between 1243 and 1259 then 'Intercompany'
+when Account between 1300 and 1379 then 'Gross Inventory'
+when Account between 1380 and 1380 then 'Inventory Reserve'
+when Account between 1381 and 1399 then 'Gross Inventory'
+when Account between 1400 and 1499 then 'Prepaids'
+when Account between 1601 and 1601 then 'Leasehold Improvements'
+when Account between 1602 and 1613 then 'Equipment Furniture Fixtures'
+when Account between 1651 and 1661 then 'Accum Depr & Amort'
+when Account between 1700 and 1701 then 'Investments'
+when Account between 1702 and 1702 then 'Goodwill'
+when Account between 1703 and 1708 then 'Investments'
+when Account between 1802 and 1802 then 'Deposits & Other'
+when Account between 1810 and 1813 then 'Other Assets'
+when Account between 2107 and 2109 then 'Short-Term Debt'
+when Account between 2201 and 2203 then 'Accounts Payable'
+when Account between 2205 and 2284 then 'Other Accrued Expenses'
+when Account between 2400 and 2462 then 'Accrued Payroll & Related'
+when Account between 2471 and 2471 then 'Other Accrued Expenses'
+when Account between 2513 and 2599 then 'Other Accrued Expenses'
+when Account between 2600 and 2600 then 'Deferred Revenue'
+when Account between 2601 and 2603 then 'Accrued Income Taxes'
+when Account between 2604 and 2604 then 'Billing in Excess of Cost'
+when Account between 2605 and 2605 then 'Deferred Income Taxes'
+when Account between 2703 and 2703 then 'Long-term Debt'
+when Account between 2704 and 2704 then 'Notes Payable LT - Leases'
+when Account between 2705 and 2705 then 'Notes Payable - Shareholders'
+when Account between 2706 and 2706 then 'Notes Payable - Comp. Income'
+when Account between 2901 and 2901 then 'Common Stock'
+when Account between 2902 and 2902 then 'Additional Paid in Capital'
+when Account between 2903 and 2903 then 'Other Comprehensive Income'
+when Account between 2930 and 2930 then 'Retained Earnings'
+when Account between 2940 and 2941 then 'Shareholder Distributions'
+when Account between 3100 and 3108 then 'Intercompany Sales'
+when Account between 3109 and 3144 then 'Customer Sales'
+when Account between 3145 and 3600 then 'Cost of Material/Cost of Sales'
+when Account between 5000 and 5999 then 'Research & Development'
+when Account between 6000 and 6999 then 'Overhead Costs'
+when Account between 7000 and 7999 then 'Selling & Marketing Expense'
+when Account between 8000 and 8999 then 'Administration Expense'
+when Account between 9000 and 9799 then 'Misc (Inc)Exp'
+when Account between 9800 and 9899 then 'Income Tax Provision'
+else 'Uncategorized'
+END AS Category,
+CASE 
+when Account < 3000 THEN 'Balance Sheet'
+when Account >= 3000 THEN 'Income Statement'
+else 'Uncategorized'
+END AS "Financial Statement"
+FROM Totalcte
+GROUP BY  COMNO, Account
+ORDER BY account, comno
+;
